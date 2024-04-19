@@ -1,4 +1,5 @@
 #!/bin/sh
+# Customized to be system wide install, by Torgeir A 19.04.24
 
 # check for unzip before we continue
 if [ ! "$(command -v unzip)" ]; then
@@ -6,48 +7,9 @@ if [ ! "$(command -v unzip)" ]; then
   exit 1
 fi
 
-_fetch_sources(){
-  wget -O /tmp/nanorc.zip https://github.com/scopatz/nanorc/archive/master.zip
-  mkdir -p ~/.nano/
+mkdir -p /usr/share/nanorc/
+cp *.nanorc /usr/share/nanorc/
+echo "include /usr/share/nanorc/*.nanorc" >> /etc/nanorc
 
-  cd ~/.nano/ || exit
-  unzip -o "/tmp/nanorc.zip"
-  mv nanorc-master/* ./
-  rm -rf nanorc-master
-  rm /tmp/nanorc.zip
-}
-
-_update_nanorc(){
-  touch ~/.nanorc
-      
-  # add all includes from ~/.nano/nanorc if they're not already there
-  while read -r inc; do
-      if ! grep -q "$inc" "${NANORC_FILE}"; then
-          echo "$inc" >> "$NANORC_FILE"
-      fi
-  done < ~/.nano/nanorc
-}
-
-_update_nanorc_lite(){
-  sed -i '/include "\/usr\/share\/nano\/\*\.nanorc"/i include "~\/.nano\/*.nanorc"' "${NANORC_FILE}"
-}
-
-NANORC_FILE=~/.nanorc
-
-case "$1" in
- -l|--lite)
-   UPDATE_LITE=1;;
- -h|--help)
-   echo "Install script for nanorc syntax highlights"
-   echo "Call with -l or --lite to update .nanorc with secondary precedence to existing .nanorc includes"
-   exit 0
- ;;
-esac
-
-_fetch_sources;
-if [ $UPDATE_LITE ];
-then
-  _update_nanorc_lite
-else
-  _update_nanorc
-fi
+chown -R root:root /usr/share/nanorc
+chmod -R 664 /usr/share/nanorc
